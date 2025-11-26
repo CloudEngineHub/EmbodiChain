@@ -245,17 +245,19 @@ class Gizmo:
         target_transform[:3, :3] = torch.tensor(
             R.from_euler("xyz", proxy_rot).as_matrix(), dtype=torch.float32
         )
+        # Ensure _pending_target_transform is (1, 4, 4)
+        if isinstance(target_transform, torch.Tensor) and target_transform.shape == (
+            4,
+            4,
+        ):
+            target_transform = target_transform.unsqueeze(0)
         self._pending_target_transform = target_transform
 
     def _update_camera_pose(self, target_transform: torch.Tensor):
         """Update camera pose to match target transform"""
         try:
             # Set camera pose using set_local_pose method
-            # target_transform shape: (4, 4), but set_local_pose expects (N, 4, 4)
-            target_transform_batch = target_transform.unsqueeze(
-                0
-            )  # Add batch dimension
-            self.target.set_local_pose(target_transform_batch)
+            self.target.set_local_pose(target_transform)
             return True
         except Exception as e:
             logger.log_error(f"Error updating camera pose: {e}")
@@ -301,7 +303,8 @@ class Gizmo:
                 return False
 
             # Get current joint positions as seed using proprioception
-            current_qpos_full = self.target.get_qpos()
+            proprioception = self.target.get_proprioception()
+            current_qpos_full = proprioception["qpos"]  # Full joint positions
 
             # Get joint IDs for this arm
             current_joint_ids = self.target.get_joint_ids(self._robot_arm_name)
@@ -326,10 +329,11 @@ class Gizmo:
 
             if ik_success:
                 # Ensure correct dimensions for setting qpos
+                # new_qpos from IK solver may be (1, N, dof) or (N, dof), flatten to (dof,) for single env
+                if new_qpos.dim() > 1:
+                    new_qpos = new_qpos.squeeze()  # Remove all singleton dimensions
                 if new_qpos.dim() == 1:
-                    new_qpos = new_qpos.unsqueeze(0)
-                elif new_qpos.dim() == 3:
-                    new_qpos = new_qpos[:, 0, :]
+                    new_qpos = new_qpos.unsqueeze(0)  # Make it (1, dof) for set_qpos
 
                 # Update robot joint positions
                 self.target.set_qpos(qpos=new_qpos, joint_ids=current_joint_ids)
