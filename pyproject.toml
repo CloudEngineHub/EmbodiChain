@@ -17,7 +17,7 @@ build-backend = "setuptools.build_meta:__legacy__"
 
 [project]
 name = "embodichain"
-version = "0.0.1"
+version = "0.0.2"
 description = "An end-to-end, GPU-accelerated, and modular platform for building generalized Embodied Intelligence."
 readme = "README.md"
 authors = [ { name = "EmbodiChain Developers" } ]
