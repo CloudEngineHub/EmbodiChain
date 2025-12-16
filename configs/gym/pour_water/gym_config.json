@@ -259,10 +259,14 @@
         },
         "dataset": {
             "robot_meta": {
+                "robot_type": "CobotMagic",
                 "arm_dofs": 12,
                 "control_freq": 25,
                 "control_parts": ["left_arm", "left_eef", "right_arm", "right_eef"],
                 "min_len_steps": 5
+            },
+            "instruction": {
+                "lang": "Pour water from bottle to cup"
             }
         }
     },

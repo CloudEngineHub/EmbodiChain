@@ -85,7 +85,8 @@ def generate_function(
     valid = True
     while True:
         _, _ = env.reset()
-
+        
+        ret = []
         for trajectory_idx in range(num_traj):
             valid = generate_and_execute_action_list(env, trajectory_idx, debug_mode)
 
@@ -93,7 +94,11 @@ def generate_function(
                 break
 
             if not debug_mode and env.is_task_success().item():
-                pass
+                dataset_id = f"time_{time_id}_trajectory_{trajectory_idx}"
+                data_dict = env.to_dataset(
+                    repo_id=dataset_id,
+                )
+                ret.append(data_dict)
 
                 # TODO: Add data saving and online data streaming logic here.
 

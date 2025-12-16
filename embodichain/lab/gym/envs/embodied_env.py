@@ -452,19 +452,80 @@ class EmbodiedEnv(BaseEnv):
             "The method 'create_demo_action_list' must be implemented in subclasses."
         )
 
-    def to_dataset(self, id: str, save_path: str = None) -> str | None:
-        """Convert the recorded episode data to a dataset format.
+    def to_dataset(
+        self,
+        repo_id: str,
+        fps: int = 30,
+        use_videos: bool = True,
+        push_to_hub: bool = False,
+        image_writer_threads: int = 4,
+        image_writer_processes: int = 0,
+    ) -> str | None:
+        """Convert the recorded episode data to LeRobot dataset format.
 
         Args:
-            id (str): Unique identifier for the dataset.
-            save_path (str, optional): Path to save the dataset. If None, use config or default.
+            repo_id (str): Repository ID for LeRobot dataset (e.g., "username/dataset_name").
+            fps (int): Frames per second for video encoding. Defaults to 30.
+            use_videos (bool): Whether to encode images as videos. Defaults to True.
+            push_to_hub (bool): Whether to push to Hugging Face Hub. Defaults to False.
+            image_writer_threads (int): Number of threads for image writing. Defaults to 4.
+            image_writer_processes (int): Number of processes for image writing. Defaults to 0.
 
         Returns:
             str | None: The path to the saved dataset, or None if failed.
         """
-        raise NotImplementedError(
-            "The method 'to_dataset' will be implemented in the near future."
+        if not hasattr(self, "episode_obs_list") or not hasattr(
+            self, "episode_action_list"
+        ):
+            logger.log_error(
+                "Episode data not available. Make sure dataset configuration is set in the environment config."
+            )
+            return None
+
+        if len(self.episode_obs_list) == 0:
+            logger.log_error("No episode data to save. Episode observation list is empty.")
+            return None
+
+        try:
+            # Import the handler - use try-except to catch import errors
+            from embodichain.data.handler.lerobot_data_handler import (
+                save_to_lerobot_format,
+            )
+        except ImportError as e:
+            logger.log_error(f"Failed to import lerobot_data_handler: {e}")
+            logger.log_error("Make sure all dependencies are installed: pip install lerobot")
+            return None
+        except Exception as e:
+            logger.log_error(f"Unexpected error importing lerobot_data_handler: {e}")
+            return None
+
+        # Prepare obs_list and action_list
+        # Remove the last observation as it doesn't have a corresponding action
+        obs_list = self.episode_obs_list[:-1] if len(self.episode_obs_list) > len(self.episode_action_list) else self.episode_obs_list
+        action_list = self.episode_action_list
+
+        logger.log_info(f"Saving episode with {len(obs_list)} frames to LeRobot format...")
+
+        # Save to LeRobot format
+        dataset_path = save_to_lerobot_format(
+            env=self,
+            obs_list=obs_list,
+            action_list=action_list,
+            repo_id=repo_id,
+            fps=fps,
+            use_videos=use_videos,
+            push_to_hub=push_to_hub,
+            image_writer_threads=image_writer_threads,
+            image_writer_processes=image_writer_processes,
         )
+
+        if dataset_path:
+            logger.log_info(
+                f"Successfully saved episode {self.curr_episode} to {dataset_path}"
+            )
+            self.curr_episode += 1
+
+        return dataset_path
 
     def is_task_success(self, **kwargs) -> torch.Tensor:
         """Determine if the task is successfully completed. This is mainly used in the data generation process
