@@ -71,11 +71,15 @@ class ArticulationData:
 
         # get gpu indices for the entities.
         # only meaningful when using GPU physics.
-        self.gpu_indices = torch.as_tensor(
-            [np.int32(entity.get_gpu_index()) for entity in self.entities],
-            dtype=torch.int32,
-            device=self.device,
-        )
+
+        if self.device.type == "cpu":
+            self.gpu_indices = None
+        else:
+            self.gpu_indices = torch.as_tensor(
+                [np.int32(entity.get_gpu_index()) for entity in self.entities],
+                dtype=torch.int32,
+                device=self.device,
+            )
 
         self.dof = self.entities[0].get_dof()
         self.num_links = self.entities[0].get_links_num()
