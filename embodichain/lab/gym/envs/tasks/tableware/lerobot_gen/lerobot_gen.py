@@ -43,6 +43,8 @@ class LerobotGenEnv(EmbodiedEnv):
 
         self.trajectory_list, self.grasp_list = self._create_full_trajectory()
         self.episode_counter = 0
+        self._has_pick = False
+        self._has_drop = False
 
     def _create_full_trajectory(self):
         # TODO: read these from cfg file
@@ -86,13 +88,16 @@ class LerobotGenEnv(EmbodiedEnv):
             grasp_pose[None, :, :], device=self.robot.device, dtype=torch.float32
         )
         grasp_object.set_local_pose(grasp_pose_t)
+
+        # fix cannot detach bug
+        if self._has_pick and not self._has_drop:
+            arena_root_node = self.sim.get_env().get_root_node()
+            grasp_entity.node.attach_node(arena_root_node)
+            grasp_entity.set_actor_type(ActorType.DYNAMIC)
+
         self._has_pick = False
         self._has_drop = False
         return trajectory[:, None, :]
-
-    def _update_sim_state(self, **kwargs) -> None:
-        grasp_object = self.sim.get_rigid_object("grasp_object")
-        grasp_entity = grasp_object._entities[0]
 
     def _update_sim_state(self, **kwargs) -> None:
         end_xpos = (
@@ -117,7 +122,6 @@ class LerobotGenEnv(EmbodiedEnv):
                 relative_pose=inv_transform(end_xpos) @ grasp_pose,
             )
             self._has_pick = True
-            print("================pick")
 
         place_distance = np.linalg.norm(end_xpos[:3, 3] - np.array(PLACE_POSITION))
         if place_distance < 0.1 and self._has_pick and not self._has_drop:
@@ -125,7 +129,6 @@ class LerobotGenEnv(EmbodiedEnv):
             grasp_entity.node.attach_node(arena_root_node)
             grasp_entity.set_actor_type(ActorType.DYNAMIC)
             self._has_drop = True
-            print("================drop")
 
 
 def _bilinear_sample(
