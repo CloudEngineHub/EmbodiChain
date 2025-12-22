@@ -33,13 +33,33 @@
             }
         }
     },
+    "rigid_object": [
+        {
+            "uid":"grasp_object",
+            "shape": {
+                "shape_type": "Mesh",
+                "fpath": "ScannedBottle/jingtian_processed.ply"
+            },
+            "attrs" : {
+                "mass": 0.1,
+                "contact_offset": 0.005,
+                "rest_offset": 0.001,
+                "restitution": 0.01,
+                "min_position_iters": 32,
+                "min_velocity_iters":8
+            },
+            "body_type": "dynamic",
+            "init_pos": [10.0, 10.0, 1.0],
+            "max_convex_hull_num": 1
+        }
+    ],
     "robot": {
         "uid": "fanuac_r2000ic165f",
         "urdf_cfg": {
             "components": [
                 {
                     "component_type": "arm",
-                    "urdf_path": "Fanuc/R_2000iC_165F/R_2000iC_165F.urdf",
+                    "urdf_path": "UniversalRobots/UR10/UR10.urdf",
                     "transform": [
                         [1.0, 0.0, 0.0, 0.0],
                         [0.0, 1.0, 0.0, 0.0],
@@ -50,7 +70,7 @@
             ]
         },
         "init_pos": [0.0, 0.0, 0.0],
-        "init_qpos": [0, 0, 0, 0, -1.570796327, 0],
+        "init_qpos": [0, -1.570796327, -1.570796327, -1.570796327, 1.570796327, 0],
         "drive_pros": {
             "drive_type": "force",
             "stiffness": 10000.0,
@@ -65,7 +85,7 @@
                 "tcp": [
                     [1.0, 0.0, 0.0, 0.0],
                     [0.0, 1.0, 0.0, 0.0],
-                    [0.0, 0.0, 1.0, 0.16],
+                    [0.0, 0.0, 1.0, 0.0],
                     [0.0, 0.0, 0.0, 1.0]
                 ]
             }
