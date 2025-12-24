@@ -75,14 +75,14 @@ class LerobotGenEnv(EmbodiedEnv):
 
         # reset grasp object pose
         # fix cannot detach bug
+        grasp_entity = grasp_object._entities[0]
+        grasp_entity.set_actor_type(ActorType.KINEMATIC)
         if self._has_pick and not self._has_drop:
             arena_root_node = self.sim.get_env().get_root_node()
             grasp_entity.node.attach_node(arena_root_node)
 
         grasp_pose = self.grasp_list[episode_id]
         grasp_object = self.sim.get_rigid_object("grasp_object")
-        grasp_entity = grasp_object._entities[0]
-        grasp_entity.set_actor_type(ActorType.KINEMATIC)
         grasp_object_aabb = grasp_entity.get_aabb_attr()
         current_world_pose = grasp_entity.get_world_pose()
         z_shift = current_world_pose[2, 3] - grasp_object_aabb[5]
