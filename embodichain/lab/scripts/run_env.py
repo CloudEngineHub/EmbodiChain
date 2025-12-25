@@ -191,8 +191,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.num_envs != 1:
-        log_error(f"Currently only support num_envs=1, but got {args.num_envs}.")
+    # if args.num_envs != 1:
+    #     log_error(f"Currently only support num_envs=1, but got {args.num_envs}.")
 
     gym_config = load_json(args.gym_config)
     cfg: EmbodiedEnvCfg = config_to_cfg(gym_config)

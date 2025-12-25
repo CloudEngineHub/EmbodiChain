@@ -365,7 +365,6 @@ class EmbodiedEnv(BaseEnv):
         self, seed: int | None = None, options: dict | None = None
     ) -> Tuple[EnvObs, Dict]:
         obs, info = super().reset(seed=seed, options=options)
-
         if hasattr(self, "episode_obs_list"):
             self.episode_obs_list = [obs]
             self.episode_action_list = []
@@ -377,9 +376,7 @@ class EmbodiedEnv(BaseEnv):
     ) -> Tuple[EnvObs, torch.Tensor, torch.Tensor, torch.Tensor, Dict[str, Any]]:
         # TODO: Maybe add action preprocessing manager and its functors.
         obs, reward, done, truncated, info = super().step(action, **kwargs)
-
         if hasattr(self, "episode_action_list"):
-
             self.episode_obs_list.append(obs)
             self.episode_action_list.append(action)
 
@@ -623,35 +620,38 @@ class EmbodiedEnv(BaseEnv):
         )
         action_list = self.episode_action_list
 
-        logger.log_info(f"Saving episode with {len(obs_list)} frames...")
+        logger.log_info(f"Saving {self.num_envs} episodes with {len(obs_list)} frames each...")
 
         # Get task instruction
         task = self.metadata["dataset"]["instruction"].get("lang", "unknown_task")
 
-        # Add frames to dataset
-        for obs, action in zip(obs_list, action_list):
-            frame = self.data_handler._convert_frame_to_lerobot(obs, action, task)
-            self.dataset.add_frame(frame)
+        # Process each environment as a separate episode
+        for env_idx in range(self.num_envs):
+            # Add frames for this specific environment
+            for obs, action in zip(obs_list, action_list):
+                frames = self.data_handler._convert_frame_to_lerobot(obs, action, task)
+                # Only add the frame for this specific environment
+                self.dataset.add_frame(frames[env_idx])
 
-        # Save episode
-        extra_info = self.cfg.dataset.get("extra", {})
-        total_frames = self.dataset.meta.info.get("total_frames", 0) + len(obs_list)
-        fps = self.dataset.meta.info.get("fps", 30)
-        total_time = total_frames / fps if fps > 0 else 0
+            # Save episode for this environment
+            extra_info = self.cfg.dataset.get("extra", {})
+            fps = self.dataset.meta.info.get("fps", 30)
+            total_time = len(obs_list) / fps if fps > 0 else 0
 
-        extra_info = self.cfg.dataset.get("extra", {})
-        extra_info["total_time"] = total_time
-        extra_info["data_type"] = "sim"
+            episode_extra_info = extra_info.copy()
+            episode_extra_info["total_time"] = total_time
+            episode_extra_info["data_type"] = "sim"
+            episode_extra_info["env_index"] = env_idx
 
-        self.update_dataset_info({"extra": extra_info})
-
-        self.dataset.save_episode()
+            self.update_dataset_info({"extra": episode_extra_info})
+            self.dataset.save_episode()
+            
+            logger.log_info(
+                f"Saved episode {self.curr_episode} for environment {env_idx} with {len(obs_list)} frames"
+            )
+            self.curr_episode += 1
 
         dataset_path = str(self.dataset.root)
-        logger.log_info(
-            f"Successfully saved episode {self.curr_episode} to {dataset_path}"
-        )
-        self.curr_episode += 1
 
         return dataset_path
 
