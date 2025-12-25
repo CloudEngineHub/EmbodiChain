@@ -123,7 +123,7 @@ class LerobotDataHandler:
             qpos_data = HandQposNormalizer.normalize_hand_qpos(
                 qpos_data, control_part, robot=robot
             )
-            state_list.append(qpos_data)
+            # state_list.append(qpos_data)
         num_envs = qpos.shape[0]
 
         frames = []
@@ -173,19 +173,14 @@ class LerobotDataHandler:
 
             # Add state (proprio)
             state_list = []
-            for proprio_name in SUPPORTED_PROPRIO_TYPES:
-                part = data_key_to_control_part(
-                    robot=robot,
-                    control_parts=robot_meta_config.get("control_parts", []),
-                    data_key=proprio_name,
+            control_parts = robot_meta_config.get("control_parts", [])
+            for part in control_parts:
+                indices = robot.get_joint_ids(part, remove_mimic=True)
+                qpos_data = qpos[env_idx][indices].cpu().numpy()
+                qpos_data = HandQposNormalizer.normalize_hand_qpos(
+                    qpos_data, part, robot=robot
                 )
-                if part:
-                    indices = robot.get_joint_ids(part, remove_mimic=True)
-                    qpos_data = qpos[env_idx][indices].cpu().numpy()
-                    qpos_data = HandQposNormalizer.normalize_hand_qpos(
-                        qpos_data, part, robot=robot
-                    )
-                    state_list.append(qpos_data)
+                state_list.append(qpos_data)
 
             if state_list:
                 frame["observation.state"] = np.concatenate(state_list)

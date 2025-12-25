@@ -32,7 +32,7 @@ from copy import deepcopy
 __all__ = ["LerobotGenEnv"]
 
 # TODO: move to cfg file
-RAW_DATA_DIR = "/root/workspace/cj/shadow_data/sack_carton_raw_data_bk"
+RAW_DATA_DIR = "/home/chenjian/Downloads/sack_carton_raw_data_bk"
 PLACE_POSITION = [0.0, 0.5, 0.2]
 
 
@@ -74,25 +74,28 @@ class LerobotGenEnv(EmbodiedEnv):
         trajectory = self.trajectory_list[episode_id]
 
         # reset grasp object pose
-
         grasp_pose = self.grasp_list[episode_id]
         grasp_object = self.sim.get_rigid_object("grasp_object")
-        grasp_entity = grasp_object._entities[0]
-        grasp_entity.set_actor_type(ActorType.KINEMATIC)
-        grasp_object_aabb = grasp_entity.get_aabb_attr()
-        current_world_pose = grasp_entity.get_world_pose()
+        for entity in grasp_object._entities:
+            entity.set_actor_type(ActorType.KINEMATIC)
+        grasp_object_aabb = grasp_object._entities[0].get_aabb_attr()
+        current_world_pose = grasp_object._entities[0].get_world_pose()
         z_shift = current_world_pose[2, 3] - grasp_object_aabb[5]
 
         grasp_pose[:3, :3] = np.eye(3)  # ignore rotation for now
         grasp_pose[2, 3] += z_shift
+        n_envs = self.robot.num_instances
         grasp_pose_t = torch.tensor(
-            grasp_pose[None, :, :], device=self.robot.device, dtype=torch.float32
+            grasp_pose, device=self.robot.device, dtype=torch.float32
         )
+        grasp_pose_t = grasp_pose_t[None, :, :].repeat(n_envs, 1, 1)
         grasp_object.set_local_pose(grasp_pose_t)
 
         self._has_pick = False
         self._has_drop = False
-        return trajectory[:, None, :]
+
+        trajectory = trajectory[:, None, :].repeat(1, n_envs, 1)
+        return trajectory
 
     def _update_sim_state(self, **kwargs) -> None:
         end_xpos = (
@@ -103,36 +106,38 @@ class LerobotGenEnv(EmbodiedEnv):
             .numpy()
         )
         grasp_object = self.sim.get_rigid_object("grasp_object")
-        grasp_entity = grasp_object._entities[0]
-        robot_entity = self.robot._entities[0]
+        grasp_entity0 = grasp_object._entities[0]
+        robot_entity0 = self.robot._entities[0]
 
-        grasp_object_aabb = grasp_entity.get_aabb_attr()
-        grasp_pose = grasp_entity.get_world_pose()
+        grasp_object_aabb = grasp_entity0.get_aabb_attr()
+        grasp_pose = grasp_entity0.get_world_pose()
         grasp_position = deepcopy(grasp_pose[:3, 3])
         grasp_position[2] = grasp_object_aabb[5]  # to top surface
 
         obj_distance = np.linalg.norm(end_xpos[:3, 3] - grasp_position)
         if obj_distance < 0.06 and not self._has_pick and not self._has_drop:
             # object move with ee_link
-            end_link_pose = robot_entity.get_link_pose("ee_link")
+            end_link_pose = robot_entity0.get_link_pose("ee_link")
             self.obj_relative_pose = inv_transform(end_link_pose) @ grasp_pose
+            self.obj_relative_pose = torch.tensor(
+                self.obj_relative_pose, dtype=torch.float32, device=self.robot.device
+            )
             self._has_pick = True
 
         place_distance = np.linalg.norm(end_xpos[:3, 3] - np.array(PLACE_POSITION))
         if place_distance < 0.07 and self._has_pick:
             self._has_pick = False
             self._has_drop = True
-            grasp_entity.set_actor_type(ActorType.DYNAMIC)
+            for entity in grasp_object._entities:
+                entity.set_actor_type(ActorType.DYNAMIC)
 
         if self._has_pick:
-            end_link_pose = robot_entity.get_link_pose("ee_link")
-            grasp_obj_pose = end_link_pose @ self.obj_relative_pose
-            grasp_obj_pose_t = torch.tensor(
-                grasp_obj_pose[None, :, :],
-                device=self.robot.device,
-                dtype=torch.float32,
-            )
-            grasp_object.set_local_pose(grasp_obj_pose_t)
+            end_link_pose = self.robot.get_link_pose("ee_link", to_matrix=True)
+            current_obj_pose = grasp_object.get_local_pose(to_matrix=True)
+            n_env = current_obj_pose.shape[0]
+            for i in range(n_env):
+                current_obj_pose[i] = end_link_pose[i] @ self.obj_relative_pose
+            grasp_object.set_local_pose(current_obj_pose)
 
 
 def _bilinear_sample(
@@ -354,15 +359,18 @@ class ConvertToLeRobot:
             grasp_positions = np.vstack((grasp_positions, value))
             start_end_id_dict[key] = (start_id, end_id)
         grasp_poses = self.generate_grasp_poses(grasp_positions=grasp_positions)
+        n_grasp = grasp_poses.shape[0]
+        n_env = self.robot.num_instances
         # [n_grasp, n_waypoints, dof]
+        dof = self.robot.dof
         success, waypoints = self.generate_grasp_waypoints(grasp_poses=grasp_poses)
         is_valid_arr = success.to("cpu").numpy()
         # do interpolation
+
         # [n_grasp, n_interp, dof]
         interp_trajectory = interpolate_with_distance_warp(
             trajectory=waypoints, interp_num=100, device=self.robot.device
         )
-
         # save successful result to dict
         trajectory_dict = {}
         for key, (start_id, end_id) in start_end_id_dict.items():
@@ -396,6 +404,7 @@ class ConvertToLeRobot:
 
     def generate_grasp_waypoints(self, grasp_poses: np.ndarray):
         n_grasp = grasp_poses.shape[0]
+        n_envs = self.robot.num_instances
         # get xpos waypoints
         grasp_poses = torch.tensor(
             grasp_poses, device=self.robot.device, dtype=torch.float32
@@ -416,8 +425,7 @@ class ConvertToLeRobot:
 
         approch_poses = grasp_poses.clone()
         approch_poses[:, 2, 3] += 0.18  # TODO: Hard coded. Approch 10cm above
-        batch_init_qpos = self.init_qpos.repeat(n_grasp, 1)
-
+        batch_init_qpos = self.init_qpos[0, None, :].repeat(n_grasp, 1)
         approach_place_poses = place_poses.clone()
         approach_place_poses[:, 2, 3] += 0.3
 
@@ -441,7 +449,6 @@ class ConvertToLeRobot:
         success = torch.logical_and(success, approach_place_success)
         success = torch.logical_and(success, place_success)
         success = torch.logical_and(success, valid_z_mask)
-
         waypoints = torch.concatenate(
             [
                 batch_init_qpos[:, None, :],
@@ -454,7 +461,8 @@ class ConvertToLeRobot:
                 batch_init_qpos[:, None, :],
             ],
             dim=1,
-        )
+        )  # [n_grasp, n_waypoints, dof]
+
         return success, waypoints
 
     def temp_compute_batch_ik(self, xpos: torch.Tensor, joint_seed: torch.Tensor):
@@ -463,12 +471,13 @@ class ConvertToLeRobot:
         qpos = torch.zeros(
             (n_grasp, self.robot.dof), dtype=torch.float32, device=self.robot.device
         )
+        solver = self.robot._solvers["arm"]
         for i in range(n_grasp):
-            is_success_i, qpos_i = self.robot.compute_ik(
-                pose=xpos[i],
-                name="arm",
-                joint_seed=joint_seed[i],
+            is_success_i, qpos_i = solver.get_ik(
+                target_xpos=xpos[i, :, :],
+                qpos_seed=joint_seed[i, :],
+                return_all_solutions=False,
             )
             is_success[i] = is_success_i
-            qpos[i] = qpos_i
+            qpos[i, :] = qpos_i.reshape(-1)
         return is_success, qpos
