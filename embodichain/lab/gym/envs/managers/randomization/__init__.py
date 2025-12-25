@@ -16,6 +16,8 @@
 
 from .rendering import *
 from .spatial import *
+from .scale import *
+
 
 """
 Randomization are all implemented as Event functors.
