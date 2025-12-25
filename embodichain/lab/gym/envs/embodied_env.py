@@ -261,7 +261,7 @@ class EmbodiedEnv(BaseEnv):
                 return
 
         # Auto-increment id until the repo_id subdirectory does not exist
-        base_id = int(self.cfg.dataset.get("id", "1"))
+        base_id = int(self.cfg.dataset.get("id", "0"))
         while True:
             dataset_id = f"{base_id:03d}"
             repo_id = f"{scene_type}_{robot_type}_{task_description}_{dataset_id}"
