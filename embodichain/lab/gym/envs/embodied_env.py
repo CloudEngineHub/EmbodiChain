@@ -196,8 +196,6 @@ class EmbodiedEnv(BaseEnv):
             # Initialize based on dataset format
             if dataset_format == "lerobot":
                 self._initialize_lerobot_dataset()
-            elif dataset_format == "hdf5":
-                self._initialize_hdf5_dataset()
 
     def _apply_functor_filter(self) -> None:
         """Apply functor filters to the environment components based on configuration.
@@ -308,23 +306,6 @@ class EmbodiedEnv(BaseEnv):
         except Exception as e:
             logger.log_error(f"Failed to initialize LeRobotDataset: {e}")
             self.dataset = None
-
-    def _initialize_hdf5_dataset(self) -> None:
-        """Initialize HDF5 dataset folder structure.
-
-        This method sets up the folder structure for HDF5 dataset recording.
-        """
-        from embodichain.lab.gym.utils.misc import camel_to_snake
-
-        save_path = self.cfg.dataset.get("save_path", None)
-        if save_path is None:
-            from embodichain.data import database_demo_dir
-
-            save_path = database_demo_dir
-
-        self.folder_name = f"{camel_to_snake(self.__class__.__name__)}_{camel_to_snake(self.robot.cfg.uid)}"
-        if os.path.exists(os.path.join(save_path, self.folder_name)):
-            self.folder_name = f"{self.folder_name}_{np.random.randint(0, 1000)}"
 
     def _init_action_bank(
         self, action_bank_cls: ActionBank, action_config: Dict[str, Any]
