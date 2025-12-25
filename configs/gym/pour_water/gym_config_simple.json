@@ -196,6 +196,7 @@
             }
         },
         "dataset": {
+            "format": "lerobot",
             "save_path": "/root/workspace/datahub",
             "extra": {
                 "scene_type": "commercial",

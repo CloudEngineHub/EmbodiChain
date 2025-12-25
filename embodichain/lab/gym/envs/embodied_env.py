@@ -134,6 +134,19 @@ class EmbodiedEnv(BaseEnv):
         self.dataset = None  # LeRobotDataset instance for data management
         self.data_handler = None  # LerobotDataHandler instance for data conversion
 
+        # Check if lerobot is available and set default format accordingly
+        try:
+            import lerobot
+
+            self._default_dataset_format = "lerobot"
+        except ImportError:
+            self.cfg.dataset["format"] = "hdf5"
+            self._default_dataset_format = "hdf5"
+            logger.log_warning(
+                "LeRobot not available. Default dataset format set to 'hdf5'. "
+                "Install lerobot to enable lerobot format: pip install lerobot"
+            )
+
         extensions = getattr(cfg, "extensions", {}) or {}
 
         defaults = {
@@ -181,32 +194,61 @@ class EmbodiedEnv(BaseEnv):
             robot_type = str(robot_type).lower().replace(" ", "_")
             task_description = str(task_description).lower().replace(" ", "_")
 
-            lerobot_data_root = self.cfg.dataset.get("save_path", None)
-            if lerobot_data_root is None:
-                from lerobot.utils.constants import HF_LEROBOT_HOME
+            # Get dataset format from dataset config, use instance default if not specified
+            dataset_format = self.cfg.dataset.get(
+                "format", self._default_dataset_format
+            )
 
-                lerobot_data_root = HF_LEROBOT_HOME
+            # Initialize based on dataset format
+            if dataset_format == "lerobot":
+                lerobot_data_root = self.cfg.dataset.get("save_path", None)
+                if lerobot_data_root is None:
+                    try:
+                        from lerobot.utils.constants import HF_LEROBOT_HOME
 
-            # Auto-increment id until the repo_id subdirectory does not exist
-            base_id = int(self.cfg.dataset.get("id", "1"))
-            while True:
-                dataset_id = f"{base_id:03d}"
-                repo_id = f"{scene_type}_{robot_type}_{task_description}_{dataset_id}"
-                repo_path = os.path.join(lerobot_data_root, repo_id)
-                if not os.path.exists(repo_path):
-                    break
-                base_id += 1
-            self.cfg.dataset["repo_id"] = repo_id
-            self.cfg.dataset["id"] = dataset_id
-            self.cfg.dataset["lerobot_data_root"] = str(lerobot_data_root)
+                        lerobot_data_root = HF_LEROBOT_HOME
+                    except ImportError:
+                        logger.log_error("LeRobot not installed.")
+
+                # Auto-increment id until the repo_id subdirectory does not exist
+                base_id = int(self.cfg.dataset.get("id", "1"))
+                while True:
+                    dataset_id = f"{base_id:03d}"
+                    repo_id = (
+                        f"{scene_type}_{robot_type}_{task_description}_{dataset_id}"
+                    )
+                    repo_path = os.path.join(lerobot_data_root, repo_id)
+                    if not os.path.exists(repo_path):
+                        break
+                    base_id += 1
+                self.cfg.dataset["repo_id"] = repo_id
+                self.cfg.dataset["id"] = dataset_id
+                self.cfg.dataset["lerobot_data_root"] = str(lerobot_data_root)
 
             self.metadata["dataset"] = self.cfg.dataset
             self.episode_obs_list = []
             self.episode_action_list = []
             self.curr_episode = 0
 
-            # Initialize LeRobotDataset if dataset config is provided
-            self._initialize_lerobot_dataset()
+            # Initialize folder name for hdf5 format
+            if dataset_format == "hdf5":
+                from embodichain.lab.gym.utils.misc import camel_to_snake
+
+                save_path = self.cfg.dataset.get("save_path", None)
+                if save_path is None:
+                    from embodichain.data import database_demo_dir
+
+                    save_path = database_demo_dir
+
+                self.folder_name = f"{camel_to_snake(self.__class__.__name__)}_{camel_to_snake(self.robot.cfg.uid)}"
+                if os.path.exists(os.path.join(save_path, self.folder_name)):
+                    self.folder_name = (
+                        f"{self.folder_name}_{np.random.randint(0, 1000)}"
+                    )
+
+            # Initialize LeRobotDataset if dataset format is lerobot
+            if dataset_format == "lerobot":
+                self._initialize_lerobot_dataset()
 
     def _apply_functor_filter(self) -> None:
         """Apply functor filters to the environment components based on configuration.
@@ -242,11 +284,10 @@ class EmbodiedEnv(BaseEnv):
             from lerobot.datasets.lerobot_dataset import LeRobotDataset
             from embodichain.data.handler.lerobot_data_handler import LerobotDataHandler
         except ImportError as e:
-            logger.log_warning(
+            logger.log_error(
                 f"Failed to import LeRobot dependencies: {e}. "
                 "Dataset recording will be disabled. Install with: pip install lerobot"
             )
-            return
 
         # Get dataset configuration
         dataset_cfg = self.cfg.dataset
@@ -543,11 +584,14 @@ class EmbodiedEnv(BaseEnv):
             "The method 'create_demo_action_list' must be implemented in subclasses."
         )
 
-    def to_dataset(self, push_to_hub: bool = False) -> str | None:
-        """Convert the recorded episode data to LeRobot dataset format.
+    def to_dataset(self, id: str = None) -> str | None:
+        """Convert the recorded episode data to dataset format.
+
+        This method can be overridden in subclasses to support different formats (e.g., hdf5).
+        The base class only supports LeRobot format.
 
         Args:
-            push_to_hub (bool): Whether to push to Hugging Face Hub. Defaults to False.
+            id (str, optional): Unique identifier for the dataset (may be used by subclasses).
 
         Returns:
             str | None: The path to the saved dataset, or None if failed.
@@ -566,6 +610,20 @@ class EmbodiedEnv(BaseEnv):
             )
             return None
 
+        # Route to appropriate save method based on dataset format
+        dataset_format = self.cfg.dataset.get("format", self._default_dataset_format)
+        if dataset_format == "lerobot":
+            return self._to_lerobot_dataset()
+        else:
+            logger.log_error(f"Unsupported dataset format: {dataset_format}")
+            return None
+
+    def _to_lerobot_dataset(self) -> str | None:
+        """Convert the recorded episode data to LeRobot dataset format.
+
+        Returns:
+            str | None: The path to the saved dataset, or None if failed.
+        """
         # Check if dataset was initialized
         if self.dataset is None:
             logger.log_error(
@@ -611,18 +669,6 @@ class EmbodiedEnv(BaseEnv):
         self.update_dataset_info({"extra": extra_info})
 
         self.dataset.save_episode()
-
-        # Optionally push to hub
-        if push_to_hub:
-            logger.log_info(
-                f"Pushing dataset to Hugging Face Hub: {self.dataset.repo_id}"
-            )
-            self.dataset.push_to_hub(
-                tags=[self.dataset.meta.info.get("robot_type", "unknown"), "imitation"],
-                private=False,
-                push_videos=True,
-                license="apache-2.0",
-            )
 
         dataset_path = str(self.dataset.root)
         logger.log_info(
@@ -680,4 +726,8 @@ class EmbodiedEnv(BaseEnv):
     def close(self) -> None:
         """Close the environment and release resources."""
         self.sim.destroy()
-        self.dataset.finalize()
+
+        # Only finalize dataset if using lerobot format
+        dataset_format = self.cfg.dataset.get("format", self._default_dataset_format)
+        if dataset_format == "lerobot":
+            self.dataset.finalize()
