@@ -33,6 +33,9 @@ from embodichain.lab.gym.envs.tasks.tableware.blocks_ranking_rgb import (
 from embodichain.lab.gym.envs.tasks.tableware.blocks_ranking_size import (
     BlocksRankingSizeEnv,
 )
+from embodichain.lab.gym.envs.tasks.tableware.place_object_drawer import (
+    PlaceObjectDrawerEnv,
+)
 
 # Reinforcement learning environments
 from embodichain.lab.gym.envs.tasks.rl.push_cube import PushCubeEnv
