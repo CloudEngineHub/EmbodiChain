@@ -156,6 +156,9 @@ class EmbodiedEnv(BaseEnv):
             "action_scale": 0.1,
         }
 
+        # Initialize total time tracker for dataset recording
+        self.total_time = 0.0
+
         for name, default in defaults.items():
             value = extensions.get(name, getattr(cfg, name, default))
             setattr(cfg, name, value)
@@ -301,7 +304,7 @@ class EmbodiedEnv(BaseEnv):
                 image_writer_threads=image_writer_threads,
                 image_writer_processes=image_writer_processes,
                 root=str(dataset_dir),
-                batch_encoding_size=20
+                batch_encoding_size=self.num_envs,
             )
             logger.log_info(f"LeRobotDataset initialized successfully: {repo_id}")
         except Exception as e:
@@ -630,12 +633,13 @@ class EmbodiedEnv(BaseEnv):
 
         # Calculate total time for the entire dataset (all environments)
         fps = self.dataset.meta.info.get("fps", 30)
-        total_time = (len(obs_list) * self.num_envs) / fps if fps > 0 else 0
+        current_episode_time = (len(obs_list) * self.num_envs) / fps if fps > 0 else 0
 
         # Prepare extra info (same for all episodes)
         extra_info = self.cfg.dataset.get("extra", {})
         episode_extra_info = extra_info.copy()
-        episode_extra_info["total_time"] += total_time
+        self.total_time += current_episode_time
+        episode_extra_info["total_time"] = self.total_time
         episode_extra_info["data_type"] = "sim"
         self.update_dataset_info({"extra": episode_extra_info})
 
