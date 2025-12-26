@@ -1,6 +1,6 @@
 {
     "id": "LerobotGen",
-    "max_episodes": 10,
+    "max_episodes": 30,
     "env": {
         "events": {
             "random_light": {
@@ -40,7 +40,7 @@
             "save_path": "/home/chenjian/.cache/huggingface/lerobot",
             "extra": {
                 "scene_type": "industrial", 
-                "task_description": "Pick bottle in lab."
+                "task_description": "Pick bottle in lab"
             },
             "robot_meta": {
                 "robot_type": "ur10",
@@ -58,7 +58,7 @@
                 "min_len_steps": 5
             },
             "instruction": {
-                "lang": "Pick bottle in lab."
+                "lang": "Pick bottle in lab"
             }
         }
     },

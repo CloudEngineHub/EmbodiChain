@@ -72,11 +72,8 @@ class LerobotDataHandler:
                 }
 
         # Add state features (proprio)
-        state_dim = 0
-        robot = self.env.robot
-        for control_part in robot.control_parts:
-            indices = robot.get_joint_ids(control_part, remove_mimic=True)
-            state_dim += len(indices)
+        qpos = self.env.robot.get_qpos()
+        state_dim = qpos.shape[1]
 
         if state_dim > 0:
             features["observation.state"] = {
@@ -128,6 +125,8 @@ class LerobotDataHandler:
 
         frames = []
 
+        all_qpos = robot.get_qpos()
+
         # Process each environment
         for env_idx in range(num_envs):
             frame = {"task": task}
@@ -172,18 +171,10 @@ class LerobotDataHandler:
                         frame[get_right_name(camera_name)] = color_right_img
 
             # Add state (proprio)
-            state_list = []
-            control_parts = robot_meta_config.get("control_parts", [])
-            for part in control_parts:
-                indices = robot.get_joint_ids(part, remove_mimic=True)
-                qpos_data = qpos[env_idx][indices].cpu().numpy()
-                qpos_data = HandQposNormalizer.normalize_hand_qpos(
-                    qpos_data, part, robot=robot
-                )
-                state_list.append(qpos_data)
+            # robot.get_qpos() returns shape (num_envs, num_joints)
+            state = all_qpos[env_idx].cpu().numpy().astype(np.float32)
 
-            if state_list:
-                frame["observation.state"] = np.concatenate(state_list)
+            frame["observation.state"] = state
 
             # Add actions
             # Handle different action types
