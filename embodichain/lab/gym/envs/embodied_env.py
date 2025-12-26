@@ -301,6 +301,7 @@ class EmbodiedEnv(BaseEnv):
                 image_writer_threads=image_writer_threads,
                 image_writer_processes=image_writer_processes,
                 root=str(dataset_dir),
+                batch_encoding_size=20
             )
             logger.log_info(f"LeRobotDataset initialized successfully: {repo_id}")
         except Exception as e:
@@ -627,6 +628,17 @@ class EmbodiedEnv(BaseEnv):
         # Get task instruction
         task = self.metadata["dataset"]["instruction"].get("lang", "unknown_task")
 
+        # Calculate total time for the entire dataset (all environments)
+        fps = self.dataset.meta.info.get("fps", 30)
+        total_time = (len(obs_list) * self.num_envs) / fps if fps > 0 else 0
+
+        # Prepare extra info (same for all episodes)
+        extra_info = self.cfg.dataset.get("extra", {})
+        episode_extra_info = extra_info.copy()
+        episode_extra_info["total_time"] += total_time
+        episode_extra_info["data_type"] = "sim"
+        self.update_dataset_info({"extra": episode_extra_info})
+
         # Process each environment as a separate episode
         for env_idx in range(self.num_envs):
             # Add frames for this specific environment
@@ -635,17 +647,7 @@ class EmbodiedEnv(BaseEnv):
                 # Only add the frame for this specific environment
                 self.dataset.add_frame(frames[env_idx])
 
-            # Save episode for this environment
-            extra_info = self.cfg.dataset.get("extra", {})
-            fps = self.dataset.meta.info.get("fps", 30)
-            total_time = len(obs_list) / fps if fps > 0 else 0
-
-            episode_extra_info = extra_info.copy()
-            episode_extra_info["total_time"] = total_time
-            episode_extra_info["data_type"] = "sim"
-            episode_extra_info["env_index"] = env_idx
-
-            self.update_dataset_info({"extra": episode_extra_info})
+            # Save episode for this environment (without triggering batch encoding yet)
             self.dataset.save_episode()
 
             logger.log_info(
