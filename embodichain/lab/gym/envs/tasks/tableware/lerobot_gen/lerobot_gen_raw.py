@@ -32,7 +32,7 @@ from copy import deepcopy
 __all__ = ["LerobotGenRawEnv"]
 
 # TODO: move to cfg file
-RAW_DATA_DIR = "/home/chenjian/Downloads/sack_carton_raw_data_bk"
+RAW_ROOT_DATA_DIR = "/home/chenjian/Downloads/all_shadow_data"
 PLACE_POSITION = [0.0, 0.5, 0.25]
 
 
@@ -43,22 +43,36 @@ class LerobotGenRawEnv(EmbodiedEnv):
 
         super().__init__(cfg, **kwargs)
 
-        config = {"data_dir": RAW_DATA_DIR, "device": "cpu", "headless": True}
-        self.converter = ConvertToLeRobot(**config)
-        self.converter.set_robot(self.robot)
-        self.trajectory_list, self.grasp_list, self.rgb_list, self.depth_list = (
-            self._create_full_trajectory()
-        )
+        path_list = os.listdir(RAW_ROOT_DATA_DIR)
+
+        self.trajectory_list = []
+        self.grasp_list = []
+        self.rgb_list = []
+        self.depth_list = []
+
+        for path in path_list:
+            raw_data_dir = os.path.join(RAW_ROOT_DATA_DIR, path)
+            if not os.path.isdir(raw_data_dir):
+                continue
+            config = {"data_dir": raw_data_dir, "device": "cpu", "headless": True}
+
+            traj_single_list, grasp_single_list, rgb_single_list, depth_single_list = (
+                self._create_full_trajectory(**config)
+            )
+            self.trajectory_list.extend(traj_single_list)
+            self.grasp_list.extend(grasp_single_list)
+            self.rgb_list.extend(rgb_single_list)
+            self.depth_list.extend(depth_single_list)
 
         self._has_pick = False
         self._has_drop = False
 
-    def _create_full_trajectory(self):
+    def _create_full_trajectory(self, **config):
         # TODO: read these from cfg file
-        # need depth image to get grasp position
-
         # save multiple trajectorys in traj_dict
-        trajectory_dict = self.converter.generate_grasp_trajectory()
+        converter = ConvertToLeRobot(**config)
+        converter.set_robot(self.robot)
+        trajectory_dict = converter.generate_grasp_trajectory()
         trajectory_list = []
         rgb_list = []
         depth_list = []
@@ -70,10 +84,10 @@ class LerobotGenRawEnv(EmbodiedEnv):
             n_traj = len(traj["traj_list"])
             trajectory_list.extend(traj["traj_list"])
             grasp_list.extend(traj["grasp_poses"])
-            rgb_path = self.converter.file_dict[key]["rgb_path"]
+            rgb_path = converter.file_dict[key]["rgb_path"]
             rgb_np = cv.imread(rgb_path, cv.IMREAD_UNCHANGED)
             rgb_resize = cv.resize(rgb_np, img_size, interpolation=cv.INTER_LINEAR)
-            depth_path = self.converter.file_dict[key]["depth_path"]
+            depth_path = converter.file_dict[key]["depth_path"]
             depth_np = cv.imread(depth_path, cv.IMREAD_UNCHANGED)
             depth_resize = cv.resize(depth_np, img_size, interpolation=cv.INTER_NEAREST)
             rgb_single_list = [rgb_resize for i in range(n_traj)]

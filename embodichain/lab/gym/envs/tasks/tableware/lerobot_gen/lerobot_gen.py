@@ -32,7 +32,7 @@ from copy import deepcopy
 __all__ = ["LerobotGenEnv"]
 
 # TODO: move to cfg file
-RAW_DATA_DIR = "/home/chenjian/Downloads/sack_carton_raw_data_bk"
+RAW_DATA_DIR = "/home/chenjian/Downloads/all_shadow_data/sack_carton_raw_data_bk"
 PLACE_POSITION = [0.0, 0.5, 0.25]
 
 
