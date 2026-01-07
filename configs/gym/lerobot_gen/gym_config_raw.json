@@ -1,6 +1,6 @@
 {
     "id": "LerobotGenRaw",
-    "max_episodes": 30,
+    "max_episodes": 25,
     "env": {
         "events": {
             "random_light": {

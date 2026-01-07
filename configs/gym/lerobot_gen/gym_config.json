@@ -1,6 +1,6 @@
 {
     "id": "LerobotGen",
-    "max_episodes": 30,
+    "max_episodes": 24,
     "env": {
         "events": {
             "random_light": {
