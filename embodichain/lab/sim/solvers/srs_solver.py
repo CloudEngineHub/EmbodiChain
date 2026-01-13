@@ -77,7 +77,7 @@ class SRSSolverCfg(SolverCfg):
     """Weights for each joint when finding the nearest IK solution."""
 
     def init_solver(
-        self, num_envs: int = 1, device: torch.device = torch.device("cpu"), **kwargs
+        self, num_envs: int = 1, device: torch.device = torch.device("cuda"), **kwargs
     ) -> "SRSSolver":
         """Initialize the solver with the configuration.
 
@@ -1184,10 +1184,10 @@ class SRSSolver(BaseSolver):
         self.root_base_xpos = root_tf.get_matrix().cpu().numpy()
 
         # Initialize implementation based on device
-        if self.device.type == "cuda":
-            self.impl = _CUDASRSSolverImpl(cfg, self.device)
-        else:
-            self.impl = _CPUSRSSolverImpl(cfg, self.device)
+        # if self.device.type == "cuda":
+        self.impl = _CUDASRSSolverImpl(cfg, self.device)
+        # else:
+        #     self.impl = _CPUSRSSolverImpl(cfg, self.device)
 
     def get_ik(
         self,

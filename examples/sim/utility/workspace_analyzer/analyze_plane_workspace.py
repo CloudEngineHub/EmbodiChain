@@ -43,13 +43,25 @@ if __name__ == "__main__":
     sim.set_manual_update(False)
 
     cfg = DexforceW1Cfg.from_dict(
-        {"uid": "dexforce_w1", "version": "v021", "arm_kind": "industrial"}
+        {"uid": "dexforce_w1", "version": "v021", "arm_kind": "anthropomorphic"}
     )
     robot = sim.add_robot(cfg=cfg)
     print("DexforceW1 robot added to the simulation.")
 
     # Set left arm joint positions (mirrored)
+    # poseA
     left_qpos = torch.tensor([0, -np.pi / 4, 0.0, -np.pi / 2, -np.pi / 4, 0.0, 0.0])
+    # poseB
+    left_qpos = torch.tensor([0, -np.pi / 4, 0.0, -np.pi / 2, np.pi / 4, 0.0, 0.0])
+    # poseC
+    left_qpos = torch.tensor(
+        [0, -np.pi / 4, 0.0, -np.pi / 2, -np.pi / 4, 0.0, np.pi / 3]
+    )
+    # # poseD
+    left_qpos = torch.tensor(
+        [0, -np.pi / 4, 0.0, -np.pi / 2, np.pi / 4, 0.0, -np.pi / 2]
+    )
+
     right_qpos = -left_qpos
     robot.set_qpos(
         qpos=left_qpos,
@@ -81,20 +93,20 @@ if __name__ == "__main__":
     cartesian_config = WorkspaceAnalyzerConfig(
         mode=AnalysisMode.PLANE_SAMPLING,
         plane_normal=torch.tensor([0.0, 0.0, 1.0]),
-        plane_point=torch.tensor([0.0, 0.0, 1.2]),
+        plane_point=torch.tensor([0.0, 0.0, 1.4]),
         # plane_bounds=torch.tensor([[-0.5, 0.5], [-0.5, 0.5]]),
         reference_pose=left_arm_pose[0]
         .cpu()
         .numpy(),  # Use computed left arm pose as reference
         visualization=VisualizationConfig(
-            show_unreachable_points=False, vis_type="axis"
+            show_unreachable_points=True, vis_type="point_cloud"
         ),
         control_part_name="left_arm",
     )
     wa_cartesian = WorkspaceAnalyzer(
         robot=robot, config=cartesian_config, sim_manager=sim
     )
-    results_cartesian = wa_cartesian.analyze(num_samples=1500, visualize=True)
+    results_cartesian = wa_cartesian.analyze(num_samples=3000, visualize=True)
     print(f"\nCartesian Space Results:")
     print(
         f"  Reachable points: {results_cartesian['num_reachable']} / {results_cartesian['num_samples']}"
