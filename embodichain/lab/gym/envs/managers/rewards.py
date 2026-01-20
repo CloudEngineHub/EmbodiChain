@@ -171,9 +171,8 @@ def action_smoothness_penalty(
         }
         ```
     """
-    # Extract action tensor from dict (priority order)
-    action_tensor = None
-    for key in ["qpos", "delta_qpos", "qvel", "qf", "eef_pose"]:
+    # Extract action tensor from dict
+    for key in ["qpos", "qvel", "qf"]:
         if key in action:
             action_tensor = action[key]
             break

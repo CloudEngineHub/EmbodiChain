@@ -86,7 +86,7 @@ Example:
      "id": "PushCubeRL",
      "cfg": {
        "num_envs": 4,
-       "obs_mode": "state",
+       "action_type": "delta_qpos",
        "episode_length": 100,
        "action_scale": 0.1,
        "success_threshold": 0.1

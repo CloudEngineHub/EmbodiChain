@@ -95,7 +95,7 @@ class PPO(BaseAlgorithm):
             )
 
             # Wrap action as dict for env processing
-            action_type = getattr(env, "action_type", "qpos")
+            action_type = getattr(env, "action_type", "delta_qpos")
             action_dict = {action_type: actions}
 
             # Step environment

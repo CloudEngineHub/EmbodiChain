@@ -77,7 +77,7 @@ The {class}`~envs.EmbodiedEnvCfg` class exposes the following additional paramet
   Dataset collection settings. Defaults to None, in which case no dataset collection is performed. Please refer to the {class}`~envs.managers.DatasetManager` class for more details.
 
 * **extensions** (Union[Dict[str, Any], None]): 
-  Task-specific extension parameters that are automatically bound to the environment instance. This allows passing custom parameters (e.g., ``episode_length``, ``obs_mode``, ``action_scale``) without modifying the base configuration class. These parameters are accessible as instance attributes after environment initialization. For example, if ``extensions = {"episode_length": 500}``, you can access it via ``self.episode_length``. Defaults to None.
+  Task-specific extension parameters that are automatically bound to the environment instance. This allows passing custom parameters (e.g., ``episode_length``, ``action_type``, ``action_scale``) without modifying the base configuration class. These parameters are accessible as instance attributes after environment initialization. For example, if ``extensions = {"episode_length": 500}``, you can access it via ``self.episode_length``. Defaults to None.
 
 * **filter_visual_rand** (bool): 
   Whether to filter out visual randomization functors. Useful for debugging motion and physics issues when visual randomization interferes with the debugging process. Defaults to ``False``.
@@ -108,7 +108,8 @@ class MyTaskEnvCfg(EmbodiedEnvCfg):
     # 4. Task Extensions
     extensions = {       # Task-specific parameters
         "episode_length": 500,
-        "obs_mode": "state",
+        "action_type": "delta_qpos",
+        "action_scale": 0.1,
     }
 ```
 

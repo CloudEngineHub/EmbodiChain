@@ -110,10 +110,9 @@ class EmbodiedEnvCfg(EnvCfg):
     
     This field can be used to pass additional parameters that are specific to certain environments
     or tasks without modifying the base configuration class. For example:
-    - obs_mode: Observation mode (e.g., "state", "image")
     - episode_length: Maximum episode length
-    - joint_limits: Joint limit constraints
     - action_scale: Action scaling factor
+    - action_type: Action type (e.g., "delta_qpos", "qpos", "qvel")
     - vr_joint_mapping: VR joint mapping for teleoperation
     - control_frequency: Control frequency for VR teleoperation
     """

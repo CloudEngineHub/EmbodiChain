@@ -241,7 +241,7 @@ class Trainer:
                 actions, _, _ = self.policy.get_action(obs, deterministic=True)
 
                 # Wrap action as dict for env processing
-                action_type = getattr(self.eval_env, "action_type", "qpos")
+                action_type = getattr(self.eval_env, "action_type", "delta_qpos")
                 action_dict = {action_type: actions}
 
                 obs, reward, terminated, truncated, info = self.eval_env.step(

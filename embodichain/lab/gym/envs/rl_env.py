@@ -17,7 +17,7 @@
 """Base environment for reinforcement learning tasks."""
 
 import torch
-from typing import Dict, Any, Sequence, Optional, Tuple, Literal
+from typing import Dict, Any, Sequence, Optional, Tuple
 
 from embodichain.lab.gym.envs import EmbodiedEnv, EmbodiedEnvCfg
 from embodichain.lab.sim.cfg import MarkerCfg
@@ -41,6 +41,12 @@ class RLEnv(EmbodiedEnv):
         if cfg is None:
             cfg = EmbodiedEnvCfg()
         super().__init__(cfg, **kwargs)
+
+        # Set default values for common RL parameters
+        if not hasattr(self, "action_scale"):
+            self.action_scale = 1.0
+        if not hasattr(self, "episode_length"):
+            self.episode_length = 1000
 
     @property
     def goal_pose(self) -> Optional[torch.Tensor]:
@@ -96,7 +102,7 @@ class RLEnv(EmbodiedEnv):
         """
         # Convert tensor input to dict based on action_type
         if not isinstance(action, dict):
-            action_type = getattr(self, "action_type", "qpos")
+            action_type = getattr(self, "action_type", "delta_qpos")
             action = {action_type: action}
 
         # Step 1: Scale all action values by action_scale
