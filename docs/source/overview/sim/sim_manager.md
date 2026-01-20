@@ -118,6 +118,7 @@ In this mode, the physics simulation stepping is automatically handling by the p
 - **`SimulationManager.enable_physics(enable: bool)`**: Enable or disable physics simulation.
 - **`SimulationManager.set_manual_update(enable: bool)`**: Set manual update mode for physics.
 
+
 ## Multiple instances
 
 `SimulationManager` supports multiple instances to run separate simulations world independently. Each instance maintains its own simulation state, assets, and configurations.
@@ -126,6 +127,7 @@ In this mode, the physics simulation stepping is automatically handling by the p
 - To get specific instance: `SimulationManager.get_instance(instance_id)`.
 
 > Currently, multiple instances are not supported for ray tracing rendering backend. Good news is that we are working on adding this feature in future releases.
+
 
 For more methods and details, refer to the [SimulationManager](https://dexforce.github.io/EmbodiChain/api_reference/embodichain/embodichain.lab.sim.html#embodichain.lab.sim.SimulationManager) documentation.
 
