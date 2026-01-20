@@ -453,7 +453,8 @@ def config_to_cfg(config: dict) -> "EmbodiedEnvCfg":
 
     env_cfg.sim_steps_per_control = config["env"].get("sim_steps_per_control", 4)
 
-    # load dataset config
+    # TODO: support more env events, eg, grasp pose generation, mesh preprocessing, etc.
+
     env_cfg.dataset = ComponentCfg()
     if "dataset" in config["env"]:
         # Define modules to search for dataset functions
@@ -485,8 +486,6 @@ def config_to_cfg(config: dict) -> "EmbodiedEnvCfg":
             else:
                 # Plain configuration (e.g., robot_meta), set directly
                 setattr(env_cfg.dataset, dataset_name, dataset_params_modified)
-
-    # TODO: support more env events, eg, grasp pose generation, mesh preprocessing, etc.
 
     env_cfg.events = ComponentCfg()
     if "events" in config["env"]:
