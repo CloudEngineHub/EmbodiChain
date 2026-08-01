@@ -14,20 +14,8 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 
-"""Collectors that step vectorized environments and assemble rollout data into a preallocated ``TensorDict`` layout."""
+"""Temporary experimental components for RL research validation."""
 
-from .base import BaseCollector
-from .differentiable import (
-    DifferentiableCollector,
-    DifferentiableRollout,
-    DifferentiableTransition,
-)
-from .sync_collector import SyncCollector
+from __future__ import annotations
 
-__all__ = [
-    "BaseCollector",
-    "DifferentiableCollector",
-    "DifferentiableRollout",
-    "DifferentiableTransition",
-    "SyncCollector",
-]
+__all__: list[str] = []

@@ -14,20 +14,10 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 
-"""Collectors that step vectorized environments and assemble rollout data into a preallocated ``TensorDict`` layout."""
+"""Temporary Newton reference environments for gradient validation."""
 
-from .base import BaseCollector
-from .differentiable import (
-    DifferentiableCollector,
-    DifferentiableRollout,
-    DifferentiableTransition,
-)
-from .sync_collector import SyncCollector
+from __future__ import annotations
 
-__all__ = [
-    "BaseCollector",
-    "DifferentiableCollector",
-    "DifferentiableRollout",
-    "DifferentiableTransition",
-    "SyncCollector",
-]
+from .planar_reach import NewtonPlanarReachEnv, NewtonPlanarReachEnvCfg
+
+__all__ = ["NewtonPlanarReachEnv", "NewtonPlanarReachEnvCfg"]
