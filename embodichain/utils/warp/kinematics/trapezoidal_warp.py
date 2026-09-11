@@ -14,13 +14,13 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 
-"""Kinematics computations and scalar motion profiles.
-
-Private Warp kernels implement OPW, SRS, UR, and trapezoidal/Double-S profiles.
-Stateful solver interfaces and robot configuration remain in
-``embodichain.lab.sim.motion.solvers``.
-"""
+"""Compatibility aliases for ``embodichain.compute.kinematics._warp.trapezoidal``."""
 
 from __future__ import annotations
 
-__all__ = []
+from embodichain.compute.kinematics._warp.trapezoidal import (
+    build_profile_warp,
+    compose_profile_samples_warp,
+)
+
+__all__ = ["build_profile_warp", "compose_profile_samples_warp"]
