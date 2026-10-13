@@ -14,4 +14,6 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 
-from .cfg import DexforceW1Cfg
+"""Tests for lightweight command-line adapters."""
+
+from __future__ import annotations
