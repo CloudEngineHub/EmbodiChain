@@ -13,6 +13,9 @@ nonempty validation cameras, the original window intent, Viser, forced Newton
 render synchronization, and custom environment demand hooks reserve
 rendering. Existing sensor/visual filters run before preflight; disabled dataset
 managers do not contribute demand. Contact-only environments do not require it.
+Camera demand includes `RobotCfg.sensors` from the selected backend preset,
+even when the independent Gym `sensor` list is empty. This selection and
+disabled-sensor filtering run before the World is constructed.
 
 `BaseEnv._requires_native_renderer()` is the extension hook. Its result reaches
 `SimulationManager(..., requires_native_renderer=...)` before Gym temporarily
