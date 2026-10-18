@@ -255,6 +255,25 @@ topics:
     tests/gym/envs/task_program/test_simulation_environment.py]
   related_topics: [scene-services, simulation-system, task-programs, robot-workspace, motion-planning, gen-sim, data-pipeline]
   status: active
+- id: learning-layers
+  title: Differentiable Learning Layers
+  aliases: [learning layers, differentiable IK layer, 可微 IK, 训练层, 学习模块分层]
+  keywords: [DifferentiableIKLayer, KinematicsLayer, SerialChainKinematics, DifferentiableIKCfg,
+    solve_dls_ik, damped_least_squares_step, Jacobian gradient, dJ/dq]
+  paths: [topics/learning-layers/learning-layers.md]
+  source_of_truth:
+  - embodichain/compute/kinematics/dls.py
+  - embodichain/compute/kinematics/serial_chain.py
+  - embodichain/compute/kinematics/pose_error.py
+  - embodichain/compute/kinematics/types.py
+  - embodichain/learning/__init__.py
+  - embodichain/learning/layers/
+  - embodichain/learning/models/
+  watch_paths: [embodichain/compute/kinematics/, embodichain/learning/layers/,
+    embodichain/learning/models/, embodichain/learning/__init__.py,
+    tests/compute/kinematics/, tests/learning/layers/]
+  related_topics: [ik-solvers, rl-learning]
+  status: active
 - id: rl-learning
   title: RL Learning Pipeline
   aliases: [rl learning, rl config, reinforcement learning, 强化学习, 训练配置]
@@ -273,8 +292,10 @@ topics:
   - embodichain/learning/rl/normalization.py
   - embodichain/learning/rl/utils/config.py
   - embodichain/learning/rl/algo/
+  - embodichain/learning/rl/policies/
+  - embodichain/learning/models/
   - extensions/embodichain_tasks/configs/tasks/
-  watch_paths: [embodichain/learning/rl/, extensions/embodichain_tasks/configs/tasks/, tests/learning/]
+  watch_paths: [embodichain/learning/rl/, embodichain/learning/models/, extensions/embodichain_tasks/configs/tasks/, tests/learning/]
   related_topics: [simulation-system, env-framework, manager-functor, configclass-pattern]
   status: active
 - id: differentiable-env

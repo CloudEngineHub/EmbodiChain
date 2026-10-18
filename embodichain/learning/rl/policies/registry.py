@@ -14,13 +14,13 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 
-"""Policy-network registration and model construction (``ActorCritic``, ``ActorOnly``, ``MLP``, ``Policy``)."""
+"""RL policy registration and construction for actor-critic and actor-only models."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 import inspect
-from typing import Dict, Type
+from typing import Type
 
 from gymnasium import spaces
 import torch
@@ -28,8 +28,6 @@ import torch
 from .actor_critic import ActorCritic
 from .actor_only import ActorOnly
 from .policy import Policy
-from .mlp import MLP
-from .normalizer import EmpiricalNormalizer
 
 # In-module policy registry
 _POLICY_REGISTRY: Dict[str, Type[Policy]] = {}
@@ -191,48 +189,14 @@ def build_policy(
     return policy_cls(**build_kwargs)
 
 
-def build_mlp_from_cfg(module_cfg: Dict, in_dim: int, out_dim: int) -> MLP:
-    """Construct an MLP module from a minimal json-like config.
-
-    Expected schema:
-      module_cfg = {
-        "type": "mlp",
-        "hidden_sizes": [256, 256],
-        "activation": "relu",
-      }
-    """
-    if module_cfg.get("type", "").lower() != "mlp":
-        raise ValueError("Only 'mlp' type is supported for actor/critic in this setup.")
-
-    network_cfg = module_cfg["network_cfg"]
-    model = MLP(
-        in_dim,
-        out_dim,
-        network_cfg["hidden_sizes"],
-        network_cfg.get("activation", "elu"),
-        last_activation=network_cfg.get("last_activation"),
-        use_layernorm=bool(network_cfg.get("use_layernorm", False)),
-        dropout_p=float(network_cfg.get("dropout_p", 0.0)),
-    )
-    if "orthogonal_init" in network_cfg:
-        model.init_orthogonal(network_cfg["orthogonal_init"])
-    return model
-
-
 # default registrations
 register_policy("actor_critic", ActorCritic)
 register_policy("actor_only", ActorOnly)
 
 __all__ = [
-    "ActorCritic",
-    "ActorOnly",
     "register_policy",
     "get_registered_policy_names",
     "build_policy",
-    "build_mlp_from_cfg",
     "get_policy_class",
     "resolve_policy_obs_groups",
-    "Policy",
-    "MLP",
-    "EmpiricalNormalizer",
 ]

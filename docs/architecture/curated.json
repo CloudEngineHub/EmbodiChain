@@ -1530,10 +1530,11 @@
       "label": "Kinematics computation",
       "kind": "package",
       "topic_ids": [
-        "ik-solvers"
+        "ik-solvers",
+        "learning-layers"
       ],
       "summary": "Shared numerical kinematics and manipulability algorithms.",
-      "details": "This package owns reusable numerical routines and private Warp kernels. Stateful robot solving remains in motion.solvers, while workspace analysis consumes shared metrics and kinematic computation.",
+      "details": "This package owns reusable numerical routines and private Warp kernels. Differentiable fixed-step IK, SE(3) residuals, and serial-chain FK/Jacobians provide simulation-independent computation for Torch learning layers. Stateful robot solving remains in motion.solvers, while workspace analysis consumes shared metrics and kinematic computation.",
       "boundaries": [
         "Numerical kernels do not own live robot or environment state."
       ],
@@ -1542,8 +1543,8 @@
           "path": "embodichain/compute/kinematics/__init__.py",
           "symbol": "<module>",
           "start_line": 17,
-          "end_line": 22,
-          "excerpt": "\"\"\"Kinematics computations and scalar motion profiles.\n\nPrivate Warp kernels implement FEP, OPW, SRS, UR, and trapezoidal/Double-S profiles.\nStateful solver interfaces and robot configuration remain in\n``embodichain.lab.sim.motion.solvers``.\nPure batched manipulability helpers live in :mod:`.manipulability`.\"\"\""
+          "end_line": 24,
+          "excerpt": "\"\"\"Kinematics computations and scalar motion profiles.\n\nPrivate Warp kernels implement FEP, OPW, SRS, UR, and trapezoidal/Double-S profiles.\nStateful solver interfaces and robot configuration remain in\n``embodichain.lab.sim.motion.solvers``.\nPure batched manipulability helpers live in :mod:`.manipulability`.\nDifferentiable fixed-step IK, SE(3) residuals and serial-chain FK/Jacobians\nprovide simulation-independent computation for Torch learning layers.\"\"\""
         }
       ],
       "documentation": [
@@ -1763,7 +1764,7 @@
       ],
       "evidence": [
         {
-          "path": "embodichain/learning/rl/models/policy.py",
+          "path": "embodichain/learning/rl/policies/policy.py",
           "symbol": "Policy",
           "start_line": 35,
           "end_line": 35,
@@ -2881,7 +2882,7 @@
       ],
       "evidence": [
         {
-          "path": "embodichain/learning/rl/models/actor_critic.py",
+          "path": "embodichain/learning/rl/policies/actor_critic.py",
           "symbol": "ActorCritic",
           "start_line": 34,
           "end_line": 34,
@@ -2890,7 +2891,7 @@
       ],
       "documentation": [
         {
-          "docname": "api_reference/embodichain/embodichain.learning.rl.models",
+          "docname": "api_reference/embodichain/embodichain.learning.rl.policies",
           "label": "ActorCritic documentation"
         }
       ]
@@ -2909,7 +2910,7 @@
       ],
       "evidence": [
         {
-          "path": "embodichain/learning/rl/models/actor_only.py",
+          "path": "embodichain/learning/rl/policies/actor_only.py",
           "symbol": "ActorOnly",
           "start_line": 31,
           "end_line": 31,
@@ -2918,7 +2919,7 @@
       ],
       "documentation": [
         {
-          "docname": "api_reference/embodichain/embodichain.learning.rl.models",
+          "docname": "api_reference/embodichain/embodichain.learning.rl.policies",
           "label": "ActorOnly documentation"
         }
       ]
@@ -5132,7 +5133,7 @@
       "scope": "Direct Python inheritance; not an algorithm-to-model compatibility matrix.",
       "evidence": [
         {
-          "path": "embodichain/learning/rl/models/actor_critic.py",
+          "path": "embodichain/learning/rl/policies/actor_critic.py",
           "symbol": "ActorCritic",
           "start_line": 34,
           "end_line": 34,
@@ -5150,7 +5151,7 @@
       "scope": "Direct Python inheritance; not an algorithm-to-model compatibility matrix.",
       "evidence": [
         {
-          "path": "embodichain/learning/rl/models/actor_only.py",
+          "path": "embodichain/learning/rl/policies/actor_only.py",
           "symbol": "ActorOnly",
           "start_line": 31,
           "end_line": 31,
