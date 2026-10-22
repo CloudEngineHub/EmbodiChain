@@ -14,7 +14,7 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 
-"""Internal scene hosts shared by atomic examples and the configured CLI."""
+"""Fixed-scene Atomic Skill demonstrations and their run host."""
 
 from __future__ import annotations
 
