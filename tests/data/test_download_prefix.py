@@ -37,6 +37,7 @@ _COLLECT_URLS = """
 import json
 from embodichain.data import dataset
 from embodichain.data.assets import CobotMagicArm, UnitreeGo2Locomotion, UniversalRobots
+from embodichain.data.assets.w1_assets import DexforceW1V030
 
 urls = {}
 
@@ -48,7 +49,7 @@ def capture(self, prefix, descriptor, path):
     raise Captured  # stop before anything is downloaded
 
 dataset.EmbodiChainDataset.__init__ = capture
-for cls in (CobotMagicArm, UnitreeGo2Locomotion, UniversalRobots):
+for cls in (CobotMagicArm, UnitreeGo2Locomotion, UniversalRobots, DexforceW1V030):
     try:
         cls()
     except Captured:
@@ -117,6 +118,8 @@ def test_assets_download_from_the_configured_prefix(prefix: str) -> None:
         f"{MIRROR}robot_assets/UniversalRobots_v4.zip",
         f"{HF_PREFIX}robot_assets/UniversalRobots_v4.zip",
     ]
+    # Corrected W1 visuals overwrite the existing V030 archive and cache.
+    assert urls["DexforceW1V030"] == [f"{MIRROR}dexforce_w1/v030/w1.zip"]
 
 
 @pytest.mark.no_sim
