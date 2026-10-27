@@ -186,6 +186,16 @@ def main():
             "embodichain": ["VERSION"],
             "embodichain_models.dynamics.nerd": ["THIRD_PARTY_LICENSES"],
             "embodichain.data": ["default_materials.json"],
+            "embodichain.compute.kinematics._warp": [
+                "ssik_LICENSE.txt",
+                "data/*.npz",
+                "data/*.json",
+            ],
+            "embodichain_robots": [
+                "_ssik_artifacts/*.py",
+                "_ssik_artifacts/*.json",
+                "_ssik_artifacts/LICENSE.txt",
+            ],
             "embodichain_robots.unitree.go1": ["profile.json"],
             "embodichain_robots.unitree.go2": ["profile.json"],
             "embodichain_robots.unitree.g1": ["profile.json"],
