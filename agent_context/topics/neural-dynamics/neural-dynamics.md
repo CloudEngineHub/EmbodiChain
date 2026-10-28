@@ -57,8 +57,13 @@ and at least two valid objects. Attention backend and source semantics belong
 to recipe/recovery identity. Source-owned epoch sampling does not claim the
 legacy research DataLoader's worker-RNG trajectory.
 
-Numerical agreement, recovery and full benchmark/retraining qualification
-remain separate evidence requirements.
+The [showcase](../../../examples/learning/rigidformer/README.md) owns downloads,
+conversion, fixed-weight evaluation and independent author-Trainer comparison.
+Its `demo` command in `_demo.py` compares live Newton spheres with render-only
+model predictions after four observed frames, through a native window or an
+engine-camera recording. It uses explicit prepared geometry and weight paths.
+Assets/results stay outside the wheel. Numerical agreement, recovery and full
+benchmark/retraining qualification remain distinct evidence requirements.
 
 ## Resource and physical identity
 
