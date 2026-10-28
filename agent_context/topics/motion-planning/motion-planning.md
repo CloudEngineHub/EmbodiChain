@@ -201,6 +201,19 @@ execution, reset, validation and persistence remain host responsibilities.
 `examples/expansion/trajectory/pure_trajectory_augmentation_showcase.py`
 renders both paths analytically on CPU and records IK residuals, source lineage
 and bridge phases without constructing a simulator.
+`trajectory_augmentation_visualizer.py` is the CPU-only browser overview for
+the implemented trajectory operators: Python calls the production APIs and
+embeds their candidates in a self-contained HTML page. The page uses the
+official Atomic Action example's seven-DoF Franka Panda serial-chain geometry
+for orbitable 3D robot and EEF-path playback. A fixed task object and placement
+target clarify pick-and-place phases without participating in augmentation;
+JavaScript owns playback, drawing, and light/dark/system theme selection using
+the documentation's stored preference. The checked-in generated page lives
+under
+`docs/source/labs/trajectory-augmentation/`; Sphinx copies that directory into
+each versioned documentation build through `html_extra_path`, so the same page
+is published by the existing GitHub Pages workflow. It deliberately excludes
+affordance, contact-point, observation and scene augmentation.
 
 `examples/sim/atomic_action/place.py` is the demonstration host. Shared helpers
 in `examples/sim/atomic_action/support.py` convert the compiled action's named
