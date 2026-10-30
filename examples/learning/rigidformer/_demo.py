@@ -257,7 +257,7 @@ def run_demo(args: argparse.Namespace) -> None:
     )
     from embodichain.lab.sim.sensors import CameraCfg
     from embodichain.lab.sim.shapes import SphereCfg
-    from embodichain.lab.visualization import VisualizationCfg
+    from embodichain.lab.visualization.cli import visualization_cfg_from_args
     from embodichain_models.dynamics.rigidformer import load_rigidformer_checkpoint
     from embodichain_models.dynamics.rigidformer.data import _verified_manifest
 
@@ -285,6 +285,7 @@ def run_demo(args: argparse.Namespace) -> None:
         args.checkpoint, device=device, attention_backend=args.attention_backend
     )
     geometry = _load_geometry(args, model.reference_config)
+    visualization = visualization_cfg_from_args(args)
     args.output.mkdir(parents=True)
     sim = None
     writer = None
@@ -296,12 +297,12 @@ def run_demo(args: argparse.Namespace) -> None:
         sim = SimulationManager(
             SimulationManagerCfg(
                 headless=True,
+                visualization=visualization,
                 device=str(device),
                 gpu_id=device.index,
                 width=_WIDTH,
                 height=_HEIGHT,
                 render_cfg=RenderCfg(renderer="hybrid"),
-                visualization=VisualizationCfg(backend="none"),
                 physics_cfg=NewtonPhysicsCfg(
                     physics_dt=1 / _PHYSICS_HZ,
                     num_substeps=2,
@@ -361,7 +362,7 @@ def run_demo(args: argparse.Namespace) -> None:
         sim.prepare()
         for index in range(count):
             bodies[index].set_velocity(lin_vel=velocities[index : index + 1].to(device))
-        if not args.headless:
+        if not args.headless and visualization.backend != "viser":
             if not sim.open_window():
                 raise RuntimeError(
                     "Unable to open the engine window; use --headless to record"

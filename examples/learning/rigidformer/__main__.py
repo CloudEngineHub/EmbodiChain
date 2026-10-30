@@ -27,6 +27,8 @@ from ._prepare import FOLDERS, download, prepare, sha256
 
 
 def main() -> None:
+    from embodichain.lab.visualization.cli import add_viser_args_to_parser
+
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     p = sub.add_parser("prepare")
@@ -42,6 +44,7 @@ def main() -> None:
         help="Debug subset only; zero prepares the full frozen corpus",
     )
     p = sub.add_parser("demo", help="Compare live Newton dynamics with RigidFormer")
+    add_viser_args_to_parser(p)
     p.add_argument(
         "--checkpoint",
         type=Path,
